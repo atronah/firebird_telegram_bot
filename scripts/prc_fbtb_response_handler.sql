@@ -2,17 +2,17 @@ set term ^ ;
 
 create or alter procedure fbtb_response_handler(
     request_id type of column fbtb_command_request.request_id
-    , request_text type of column fbtb_command_request.request_text
-    , url type of column fbtb_command_request.url
-    , http_method type of column fbtb_command_request.http_method
+    , response type of column fbtb_command_request.result_response
 )
 as
 declare bot_id type of column fbtb_bot.bot_id;
-declare created type of column fbtb_command_request.created;
-declare from_chat_id type of column fbtb_command_request.from_chat_id;
-declare from_user_id type of column fbtb_command_request.from_user_id;
-declare command_arguments type of column fbtb_command_request.command_arguments;
-declare request_text type of column fbtb_command_request.command_arguments;
+
+declare status type of column fbtb_command_request.status = 0;
+declare request_text type of column fbtb_command_request.request_text;
+declare command_name type of column fbtb_command.command_name;
+
+declare message_data blob sub_type text;
+declare pos bigint;
 -- Constants
 -- -- status of command request
 declare UNPROCESSED type of column fbtb_command_request.status = 0;
@@ -28,6 +28,37 @@ begin
     else if (request_id < 0) then
     begin
         bot_id = -request_id;
+
+        for select
+                val as message_data
+            from aux_json_parse(:request_text) as j
+            where j.path = '/-/result/-/'
+                and j.name = 'message'
+            into message_data
+        do
+        begin
+            chat_id = null; request_text = null;
+
+            status = UNPROCESSED;
+
+            select
+                    max(iif(path = '/-/chat/' and name = 'id', val, null) as chat_id
+                    , max(iif(path = '/-/' and name = 'text', val, null) as request_text
+                from aux_json_parse(:message_data)
+                into chat_id, request_text;
+
+            if (request_text starts with '/') then
+            begin
+
+                select
+                        allowed_chat_id_list
+                        , allowed_user_id_list
+                        , result_statement
+                    from fbtb_command as c
+                    where c.bot_id = :bot_id
+                        and c.command_name = :command_name
+            end
+        end
     end
 
     for select
