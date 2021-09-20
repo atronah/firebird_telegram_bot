@@ -5,6 +5,7 @@ create or alter procedure fbtb_process_command_request(
     , request_text type of column fbtb_command_request.request_text
     , from_chat_id type of column fbtb_command_request.from_chat_id
     , from_user_id type of column fbtb_command_request.from_user_id
+    , no_sound type of column fbtb_command_subscription.no_sound = null
     , subscription_id type of column fbtb_command_subscription.subscription_id = null
 )
 returns (
@@ -62,11 +63,13 @@ begin
 
     http_method = 'POST';
 
+    status = PREPARED;
+    no_sound = coalesce(no_sound, 0);
+
     if (command_name = 'help') then
     begin
-        status = PREPARED;
         command_id = -1;
-        no_sound = 0;
+
         result_text = 'Common commands:' || :ENDL
             || '- `/help` - shows that message' || :ENDL
             || '- `/subscribe COMMAND REPEAT_AFTER [START_DATE] [END_DATE] [FROM_TIME] [TO_TIME] [NO_SOUND]`'
@@ -98,8 +101,6 @@ begin
     end
     else if (command_name = 'subscription') then
     begin
-        status = PREPARED;
-
         result_text = null;
         begin
             select
@@ -171,7 +172,8 @@ begin
     else
     begin
         -- for processing subscription skipps by default until check all errors
-        status = iif (subscription_id is not null, SKIPPED, PREPARED);
+        if (subscription_id is not null)
+            then status = SKIPPED;
 
         command_id = null; allowed_chat_id_list = null; allowed_user_id_list = null;
         select command_id
