@@ -24,12 +24,8 @@ begin
             , result_text as msgtext
             , url as uri
             , http_method as method
-        from fbtb_get_requests as m
-        where m.sent is null
-            and current_timestamp between
-                coalesce(t.start_date, current_date) + coalesce(t.start_time, cast(current_timestamp as time))
-                and coalesce(t.end_date, current_date) + coalesce(t.end_time, cast(current_timestamp as time))
-            into logid, msgid, msgtext, uri, method
+        from fbtb_get_requests
+        into logid, msgid, msgtext, uri, method
     do
     begin
         suspend;
