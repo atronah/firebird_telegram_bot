@@ -6,19 +6,19 @@ create or alter procedure fbtb_process_command_request(
     , from_chat_id type of column fbtb_command_request.from_chat_id
     , from_user_id type of column fbtb_command_request.from_user_id
 )
+returns (
+    request_id type of column fbtb_command_request.request_id
+    , command_id type of column fbtb_command_request.command_id
+    , command_name type of column fbtb_command.command_name
+    , command_arguments type of column fbtb_command_request.command_arguments
+    , result_statement type of column fbtb_command_request.result_statement
+    , result_text type of column fbtb_command_request.result_text
+    , url type of column fbtb_command_request.url
+    , http_method type of column fbtb_command_request.http_method
+    , status type of column fbtb_command_request.status
+    , status_info type of column fbtb_command_request.status_info
+)
 as
-declare command_name type of column fbtb_command.command_name;
-
-declare request_id type of column fbtb_command_request.request_id;
-declare command_id type of column fbtb_command_request.command_id;
-declare command_arguments type of column fbtb_command_request.command_arguments;
-declare result_statement type of column fbtb_command_request.result_statement;
-declare result_text type of column fbtb_command_request.result_text;
-declare url type of column fbtb_command_request.url;
-declare http_method type of column fbtb_command_request.http_method;
-declare status type of column fbtb_command_request.status;
-declare status_info type of column fbtb_command_request.status_info;
-
 declare allowed_chat_id_list type of column fbtb_command.allowed_chat_id_list;
 declare allowed_user_id_list type of column fbtb_command.allowed_user_id_list;
 
@@ -244,6 +244,7 @@ begin
                 , :url, :http_method
                 , :status, :status_info, 'now'
                 , :subscription_id);
+    suspend;
 end^
 
 set term ; ^
