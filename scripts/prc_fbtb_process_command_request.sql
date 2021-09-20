@@ -29,7 +29,6 @@ declare start_date type of column fbtb_command_subscription.start_date;
 declare end_date type of column fbtb_command_subscription.end_date;
 declare from_time type of column fbtb_command_subscription.from_time;
 declare to_time type of column fbtb_command_subscription.to_time;
-declare no_sound type of column fbtb_command_subscription.no_sound;
 
 declare data_db type of column fbtb_bot.data_db;
 declare data_user type of column fbtb_bot.data_user;
@@ -60,6 +59,10 @@ begin
     command_name = iif(pos > 0
                         , substring(request_text from 2 for pos - 2)
                         , substring(request_text from 2));
+
+    -- in group chats commands for bot should countain bot name after `@` symbol (`/command@my_bot`)
+    if ('@' in command_name)
+        then command_name = substring(command_name from 1 for position('@') - 1);
 
     http_method = 'POST';
 
@@ -154,10 +157,9 @@ begin
                                     || coalesce(from_user_id, 'null');
             else
             begin
-                subscription_id = (select cs.ubscription_id
+                subscription_id = (select cs.subscription_id
                                     from fbtb_command_subscription as cs
-                                    where cs.bot_id = :bot_id
-                                        and cs.command_id = :command_id
+                                    where cs.command_id = :command_id
                                         and chat_id = :from_chat_id
                                         and user_id = :from_user_id);
                 if (subscription_id is null)
@@ -187,7 +189,7 @@ begin
         subscription_id = null;
 
         select
-                cs.ubscription_id
+                cs.subscription_id
                 , 'Subscription to `/' || :command_name || '` '
                     || ' has been removed.' || :ENDL || :ENDL
                     || 'To re-subscribe send:' || :ENDL
@@ -201,8 +203,7 @@ begin
                             || coalesce(' ' || cs.no_sound, '')
                     || '`'
             from fbtb_command_subscription as cs
-            where cs.bot_id = :bot_id
-                and cs.command_id = :command_id
+            where cs.command_id = :command_id
                 and chat_id = :from_chat_id
                 and user_id = :from_user_id
             into subscription_id, result_text;
