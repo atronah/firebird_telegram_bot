@@ -7,7 +7,6 @@ create or alter procedure fbtb_response_handler(
 as
 declare bot_id type of column fbtb_bot.bot_id;
 
-declare request_id type of column fbtb_command_request.request_id;
 declare from_chat_id type of column fbtb_command_request.from_chat_id;
 declare from_user_id type of column fbtb_command_request.from_user_id;
 declare request_text type of column fbtb_command_request.request_text;
@@ -44,7 +43,7 @@ begin
         for select
                 val as message_data
             from aux_json_parse(:request_text) as j
-            where j.path = '/-/result/-/'
+            where j.node_path = '/-/result/-/'
                 and j.name = 'message'
             into message_data
         do
@@ -53,12 +52,12 @@ begin
             from_user_id = null; from_user_name = null;
             request_text = null;
             select
-                    max(iif(path = '/-/chat/' and name = 'id', val, null)) as from_chat_id
-                    , max(iif(path = '/-/chat/' and name = 'title', val, null)) as from_chat_title
-                    , max(iif(path = '/-/from/' and name = 'id', val, null)) as from_user_id
-                    , max(iif(path = '/-/from/' and name = 'username', val, null)) as from_user_name
-                    , max(iif(path = '/-/' and name = 'text', val, null)) as request_text
-                from aux_json_parse(:message_data)
+                    max(iif(j.node_path = '/-/chat/' and j.name = 'id', val, null)) as from_chat_id
+                    , max(iif(j.node_path = '/-/chat/' and j.name = 'title', val, null)) as from_chat_title
+                    , max(iif(j.node_path = '/-/from/' and j.name = 'id', val, null)) as from_user_id
+                    , max(iif(j.node_path = '/-/from/' and j.name = 'username', val, null)) as from_user_name
+                    , max(iif(j.node_path = '/-/' and j.name = 'text', val, null)) as request_text
+                from aux_json_parse(:message_data) as j
                 into from_chat_id, from_chat_title
                         , from_user_id, from_user_name
                         , request_text;
@@ -67,8 +66,8 @@ begin
                 from fbtb_process_command_request(:bot_id, :request_text, :from_chat_id, :from_user_id)
                 into request_id;
 
-            update or insert into fbtb_chat(chat_id, title, updated) value(:from_chat_id, :from_chat_title, 'now');
-            update or insert into fbtb_user(user_id, username, updated) value(:from_user_id, :from_user_name, 'now');
+            update or insert into fbtb_chat(chat_id, title, updated) values (:from_chat_id, :from_chat_title, 'now');
+            update or insert into fbtb_user(user_id, username, updated) values (:from_user_id, :from_user_name, 'now');
         end
     end
 end^
