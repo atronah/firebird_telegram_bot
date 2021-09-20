@@ -13,7 +13,7 @@ returns(
 as
 begin
     msgid = logid;
-    execute procedure fbtb_response_handler(:logid, :fbtb_response_handler);
+    execute procedure fbtb_response_handler(:logid, :request);
 
     suspend;
 end^
