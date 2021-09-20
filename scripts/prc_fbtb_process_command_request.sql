@@ -5,6 +5,7 @@ create or alter procedure fbtb_process_command_request(
     , request_text type of column fbtb_command_request.request_text
     , from_chat_id type of column fbtb_command_request.from_chat_id
     , from_user_id type of column fbtb_command_request.from_user_id
+    , subscription_id type of column fbtb_command_subscription.subscription_id = null
 )
 returns (
     request_id type of column fbtb_command_request.request_id
@@ -22,7 +23,6 @@ as
 declare allowed_chat_id_list type of column fbtb_command.allowed_chat_id_list;
 declare allowed_user_id_list type of column fbtb_command.allowed_user_id_list;
 
-declare subscription_id type of column fbtb_command_subscription.subscription_id;
 declare repeat_after type of column fbtb_command_subscription.repeat_after;
 declare start_date type of column fbtb_command_subscription.start_date;
 declare end_date type of column fbtb_command_subscription.end_date;
