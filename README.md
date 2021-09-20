@@ -66,7 +66,7 @@ Shows supported commands
 Using: `/subscribe COMMAND REPEAT_AFTER [START_DATE] [END_DATE] [FROM_TIME] [TO_TIME] [NO_SOUND]`
 
 Adds subscription to the command `COMMAND` for the chat where the `/subscribe` was execute.
-Subscription means that in period from `START_DATE` to `END_DATE` the `COMMAND` will being executed automatically between `FROM_TIME` and `TO_TIME` with delay `REPEAT_AFTER` and result will being send to the current chat (without notification if `NO_SOUND` > 0.
+Subscription means that in period from `START_DATE` to `END_DATE` the `COMMAND` will being executed automatically between `FROM_TIME` and `TO_TIME` with delay `REPEAT_AFTER` and result will being send to the current chat (without notification if `NO_SOUND` > 0).
 
 Arguments:
 
@@ -185,7 +185,7 @@ Fields:
 #### fbtb_get_requests
 
 Makes following requests to Telegram Bot API for each enabled bot
-(if messages_per_day do not exceed):
+(if messages_per_day wasn't exceeded):
 
 - `getUpdates`, if more than [update_delay_in_milliseconds][fbtb_bot] has passed after last the same request
 - `sendMessage` for each [fbtb_command_request][] with empty [result_sent][fbtb_command_request]
