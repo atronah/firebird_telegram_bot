@@ -44,7 +44,6 @@ begin
             , null as result_text
             , 'https://api.telegram.org/bot'|| b.bot_token || '/getUpdates' as url
             , 'GET' as http_method
-            , b.bot_id
             , coalesce(b.messages_per_day_limit, 0)
         from fbtb_bot as b
         where b.enabled > 0
