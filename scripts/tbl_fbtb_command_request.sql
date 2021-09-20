@@ -3,17 +3,17 @@ create sequence fbtb_command_request_seq;
 create table fbtb_command_request(
     request_id bigint
     , command_id bigint
-    , created timestamp
+    , created timestamp default current_timestamp
     , from_chat_id bigint
     , from_user_id bigint
     , command_arguments varchar(1024)
     , request_text blob sub_type text
+    , result_statement blob sub_type text
     , result_text blob sub_type text
     , result_sent timestamp
     , result_response blob sub_type text
     , url varchar(1024)
     , http_method varchar(16)
-    , command_statement blob sub_type text
     , status smallint
     , status_info varchar(1024)
     , status_updated timestamp
