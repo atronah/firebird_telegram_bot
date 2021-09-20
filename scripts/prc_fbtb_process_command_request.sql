@@ -61,8 +61,8 @@ begin
                         , substring(request_text from 2));
 
     -- in group chats commands for bot should countain bot name after `@` symbol (`/command@my_bot`)
-    if ('@' in command_name)
-        then command_name = substring(command_name from 1 for position('@') - 1);
+    if (command_name containing '@')
+        then command_name = substring(command_name from 1 for position('@' in  command_name) - 1);
 
     http_method = 'POST';
 
