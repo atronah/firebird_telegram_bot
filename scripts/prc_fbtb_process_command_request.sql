@@ -80,6 +80,7 @@ begin
                 || ' between `FROM_TIME` and `TO_TIME` with delay'' `REPEAT_AFTER`'
                 || ' and result will being send to the current chat'
                 || ' (without notification if `NO_SOUND` > 0).' || :ENDL
+            || '- `/unsubscribe COMMAND` - stop subscription for ' || :ENDL
             || coalesce(:ENDL
                         || 'Database commands:' || :ENDL
                         || (select
@@ -99,7 +100,7 @@ begin
                             )
                         , '');
     end
-    else if (command_name = 'subscription') then
+    else if (command_name = 'subscribe') then
     begin
         result_text = null;
         begin
@@ -153,21 +154,69 @@ begin
                                     || coalesce(from_user_id, 'null');
             else
             begin
-                subscription_id = next value for fbtb_command_subscription_seq;
-                insert into fbtb_command_subscription
+                subscription_id = (select cs.ubscription_id
+                                    from fbtb_command_subscription as cs
+                                    where cs.bot_id = :bot_id
+                                        and cs.command_id = :command_id
+                                        and chat_id = :from_chat_id
+                                        and user_id = :from_user_id);
+                if (subscription_id is null)
+                    then subscription_id = next value for fbtb_command_subscription_seq;
+                update or insert into fbtb_command_subscription
                             (subscription_id
-                            , command_id, chat_id, repeat_after
-                            , start_date, end_date, from_time, to_time
+                            , command_id, chat_id, user_id
+                            , repeat_after, start_date, end_date, from_time, to_time
                             , no_sound)
                     values (:subscription_id
-                            , :command_id, :from_chat_id, :repeat_after
-                            , :start_date, :end_date, :from_time, :to_time
+                            , :command_id, :from_chat_id, :from_user_id
+                            , :repeat_after, :start_date, :end_date, :from_time, :to_time
                             , :no_sound);
             end
         end
 
         command_id = -2;
-        command_name = 'subscription';
+        command_name = 'subscribe';
+    end
+    else if (command_name = 'unsubscribe') then
+    begin
+        select command_id
+                from fbtb_command as c
+                where c.bot_id = :bot_id
+                    and c.command_name = :command_name
+                into command_id;
+        subscription_id = null;
+
+        select
+                cs.ubscription_id
+                , 'Subscription to `/' || :command_name || '` '
+                    || ' has been removed.' || :ENDL || :ENDL
+                    || 'To re-subscribe send:' || :ENDL
+                    || '`/subscribe '
+                            || :command_name
+                            || ' ' || cs.repeat_after
+                            || coalesce(' ' || cs.start_date, '')
+                            || coalesce(' ' || cs.end_date, '')
+                            || coalesce(' ' || cs.from_time, '')
+                            || coalesce(' ' || cs.to_time, '')
+                            || coalesce(' ' || cs.no_sound, '')
+                    || '`'
+            from fbtb_command_subscription as cs
+            where cs.bot_id = :bot_id
+                and cs.command_id = :command_id
+                and chat_id = :from_chat_id
+                and user_id = :from_user_id
+            into subscription_id, result_text;
+
+
+        if (subscription_id is null) then
+        begin
+            result_text = 'Subscription to `/' || :command_name
+                            || '` for chat ' || coalesce(:from_chat_id, 'null')
+                            || ' and user ' || coalesce(:from_user_id, 'null')
+                            || ' not found';
+        end
+        else delete from fbtb_command_subscription
+                where subscription_id = :subscription_id;
     end
     else
     begin
