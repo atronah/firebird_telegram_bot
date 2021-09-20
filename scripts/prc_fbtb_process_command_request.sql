@@ -170,7 +170,8 @@ begin
     end
     else
     begin
-        status = PREPARED;
+        -- for processing subscription skipps by default until check all errors
+        status = iif (subscription_id is not null, SKIPPED, PREPARED);
 
         command_id = null; allowed_chat_id_list = null; allowed_user_id_list = null;
         select command_id
@@ -200,6 +201,7 @@ begin
         else if (coalesce(result_statement, '') = '')
             then result_text = 'Empty SQL-statement for the command `'
                                 || coalesce(:command_name, 'null')|| '`';
+        else
         begin
             select
                     b.data_db, b.data_user, b.data_password
@@ -214,6 +216,8 @@ begin
 
             if (result_text is null) then
             begin
+                status = PREPARED; -- mark to send for subscription if no errors
+
                 execute statement result_statement
                     on external :data_db as user :data_user password :data_password
                     into result_text;
@@ -222,6 +226,7 @@ begin
                     result_text = result_statement;
                 end
             end
+
         end
     end
 
